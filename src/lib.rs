@@ -11,6 +11,9 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
 
     // get the ident
     let ident = input.ident;
+    // get generics
+    let generics = input.generics;
+    println!("{:?}", generics);
     // get the variants
     let variants = match input.data {
         syn::Data::Enum(data) => data.variants,
@@ -28,7 +31,7 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
                     let field = fields.unnamed.first().expect("shoulf have 1 field");
                     let ty = &field.ty;
                     quote! {
-                        impl From<#ty> for #ident {
+                        impl #generics From<#ty> for #ident #generics {
                             fn from(up: #ty) -> Self {
                                 #ident::#var(up)
                             }
