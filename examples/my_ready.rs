@@ -4,8 +4,6 @@ use std::{
     task::{Context, Poll},
 };
 
-use macros::my_ready;
-
 #[tokio::main]
 async fn main() {
     let fut = MyFut::new(42);
@@ -42,4 +40,14 @@ impl Future for MyFut {
             Poll::Pending
         }
     }
+}
+
+#[macro_export]
+macro_rules! my_ready {
+    ($expr:expr) => {
+        match $expr {
+            std::task::Poll::Ready(val) => std::task::Poll::Ready(val),
+            std::task::Poll::Pending => return std::task::Poll::Pending,
+        }
+    };
 }
