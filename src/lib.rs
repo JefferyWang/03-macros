@@ -1,7 +1,11 @@
+mod enum_from;
+mod enum_from_darling;
+
 // proc macro crate
 
+use enum_from::process_enum_from;
+use enum_from_darling::process_enum_from_darling;
 use proc_macro::TokenStream;
-use quote::quote;
 
 // for enum, we'd like to generate From impls for each variants
 #[proc_macro_derive(EnumFrom)]
@@ -9,44 +13,13 @@ pub fn derive_enum_from(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
     // println!("input: {:#?}", input);
 
-    // get the ident
-    let ident = input.ident;
-    // get generics
-    let generics = input.generics;
-    println!("{:?}", generics);
-    // get the variants
-    let variants = match input.data {
-        syn::Data::Enum(data) => data.variants,
-        _ => panic!("EnumFrom only works on enums"),
-    };
-    // for each variant, get the ident and fields
-    let from_impls = variants.iter().map(|variant| {
-        let var = &variant.ident;
-        match &variant.fields {
-            syn::Fields::Unnamed(fields) => {
-                // only support one field
-                if fields.unnamed.len() != 1 {
-                    quote! {}
-                } else {
-                    let field = fields.unnamed.first().expect("shoulf have 1 field");
-                    let ty = &field.ty;
-                    quote! {
-                        impl #generics From<#ty> for #ident #generics {
-                            fn from(up: #ty) -> Self {
-                                #ident::#var(up)
-                            }
-                        }
-                    }
-                }
-            }
-            syn::Fields::Unit => quote! {},
-            syn::Fields::Named(_fields) => quote! {},
-        }
-    });
+    process_enum_from(input).into()
+}
 
-    // quote return proc-marcro2 TokenStream so we need to convert it to TokenStream
-    quote! {
-        #(#from_impls)*
-    }
-    .into()
+#[proc_macro_derive(EnumFromDarling)]
+pub fn derive_enum_from_darling(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+    // println!("input: {:#?}", input);
+
+    process_enum_from_darling(input).into()
 }
